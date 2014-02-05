@@ -17,8 +17,13 @@ if [ ! -z "$2" ] ;  then
     echo 'Number of retries:' $count
 fi
 
+if [ ! -z "$3" ] ;  then
+    ns=$2
+    echo 'Namespace:' $ns
+fi
+
 while [[ $count -ne 0 ]] ; do
-    ping -c 1 $dst                      # Try once.
+    ip netns $ns ping -c 1 $dst                      # Try once.
     rc=$?
     if [[ $rc -eq 0 ]] ; then
         ((count = 1))                      # If okay, flag to exit loop.
