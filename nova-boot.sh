@@ -14,13 +14,16 @@ if [ ! -z "$2" ] ;  then
     echo 'Net UUID is: ' $net
 fi
 if [ ! -z "$3" ] ;  then
-    num=$1
+    num=$3
     echo 'Number of requested instances is: ' $num
 fi
 
 
 outd="./report/"
-mkdir $outd
+if [ ! -d "$outd" ] ; then
+    mkdir $outd
+fi
+
 output="$outd/$net.out"
 
 echo ''
@@ -28,7 +31,7 @@ echo 'Booting instances'
 echo "nova boot --flavor m1.tiny --image $image --nic net-id=$net vm1 --num-instances $num"
 echo ''
 
-nova boot --flavor m1.tiny --image $image --nic net-id=$net vm1 --num-instances $num
+#nova boot --flavor m1.tiny --image $image --nic net-id=$net vm1 --num-instances $num
 
 echo "Waiting for IP addresses"
 
@@ -40,8 +43,13 @@ if [[ $nips -ne $num ]] ; then
     echo "WARN: Number of instances with IP $nips is not equal to the number of requested instances $num"
 fi
 
-for ip in "${ips[@]}"; do
-  echo "Checking ${ip} reachability"
-  ./ping-reachability.sh $ip $retries "qdhcp-$net" $output
-done
+#for ip in "$ips"; do
+#  echo "Checking ${ip} reachability"
+#  ./ping-reachability.sh $ip $retries "qdhcp-$net" $output
+#done
+
+while read -r ip; do
+    echo "Checking ${ip} reachability"
+    ./ping-reachability.sh $ip $retries "qdhcp-$net" $output
+done <<< "$ips"
 

@@ -28,21 +28,24 @@ if [ ! -z "$4" ] ;  then
 fi
 
 while [[ $count -ne 0 ]] ; do
-    ip netns $ns ping -c 1 $dst                      # Try once.
+    sudo ip netns exec $ns ping -c 1 $dst                  
     rc=$?
     if [[ $rc -eq 0 ]] ; then
-        ((count = 1))                      # If okay, flag to exit loop.
+        ((count = 1))                      
     fi
-    ((count = count - 1))                  # So we don't go forever.
+    ((count = count - 1))                  
 done
 
-if [[ $rc -eq 0 ]] ; then                  # Make final determination.
-    echo 'say The internet is back up.'
+end_time=$(($(date +%s%N)/1000000))
+if [[ $rc -eq 0 ]] ; then
+    echo 'Time to Reachability' `expr $end_time - $start_time` 'milliseconds'
+    echo "$dst|$(expr $end_time - $start_time)|$start_time|$end_time|" >> $output
 else
-    echo 'say Timeout.'
+    echo 'Dest $dst is not reachable'
+    echo "$dst|-|$start_time|$end_time|" >> $output
 fi
 
-end_time=$(($(date +%s%N)/1000000))
+
 echo 'Time to Reachability' `expr $end_time - $start_time` 'milliseconds'
 
-echo '' `expr $end_time - $start_time` 'milliseconds' >> $output
+echo "$dst|$(expr $end_time - $start_time)|$start_time|$end_time|" >> $output
