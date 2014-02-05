@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-
+outd="./report/"
 #Time in milliseconds
 #$(($(date +%s%N)/1000000))
 start_time=$(($(date +%s%N)/1000000))
@@ -18,8 +18,13 @@ if [ ! -z "$2" ] ;  then
 fi
 
 if [ ! -z "$3" ] ;  then
-    ns=$2
+    ns=$3
     echo 'Namespace:' $ns
+fi
+
+if [ ! -z "$4" ] ;  then
+    output=$4
+    echo 'Output file:' $output
 fi
 
 while [[ $count -ne 0 ]] ; do
@@ -40,3 +45,4 @@ fi
 end_time=$(($(date +%s%N)/1000000))
 echo 'Time to Reachability' `expr $end_time - $start_time` 'milliseconds'
 
+echo '' `expr $end_time - $start_time` 'milliseconds' >> $output
