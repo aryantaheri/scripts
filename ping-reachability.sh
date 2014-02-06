@@ -46,6 +46,6 @@ else
 fi
 
 
-echo 'Time to Reachability' `expr $end_time - $start_time` 'milliseconds'
+#echo 'Time to Reachability' `expr $end_time - $start_time` 'milliseconds'
 
-echo "$dst|$(expr $end_time - $start_time)|$start_time|$end_time|" >> $output
+#echo "$dst|$(expr $end_time - $start_time)|$start_time|$end_time|" >> $output
