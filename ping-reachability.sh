@@ -22,8 +22,8 @@ if [ ! -z "$3" ] ;  then
     echo 'Namespace:' $ns
 fi
 
-if [ ! -z "$4" ] ;  then
-    output=$4
+if [ ! -z "$5" ] ;  then
+    output=$5
     echo 'Output file:' $output
 fi
 
