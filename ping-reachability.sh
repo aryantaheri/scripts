@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-outd="./report/"
+
 #Time in milliseconds
 #$(($(date +%s%N)/1000000))
 start_time=$(($(date +%s%N)/1000000))
@@ -22,6 +22,11 @@ if [ ! -z "$3" ] ;  then
     echo 'Namespace:' $ns
 fi
 
+if [ ! -z "$4" ] ;  then
+    request_time=$4
+    echo 'Request Time:' $request_time
+fi
+
 if [ ! -z "$5" ] ;  then
     output=$5
     echo 'Output file:' $output
@@ -38,14 +43,9 @@ done
 
 end_time=$(($(date +%s%N)/1000000))
 if [[ $rc -eq 0 ]] ; then
-    echo 'Time to Reachability' `expr $end_time - $start_time` 'milliseconds'
-    echo "$dst|$(expr $end_time - $start_time)|$start_time|$end_time|" >> $output
+    echo "Dest $dst Time to Reachability" `expr $end_time - $start_time` "milliseconds"
+    echo "|$dst|$(expr $end_time - $request_time)|$(expr $end_time - $start_time)|$request_time|$start_time|$end_time|" >> $output
 else
-    echo 'Dest $dst is not reachable'
-    echo "$dst|-|$start_time|$end_time|" >> $output
+    echo "Dest $dst is not reachable"
+    echo "|$dst|-|-|$request_time|$start_time|$end_time|" >> $output
 fi
-
-
-#echo 'Time to Reachability' `expr $end_time - $start_time` 'milliseconds'
-
-#echo "$dst|$(expr $end_time - $start_time)|$start_time|$end_time|" >> $output
