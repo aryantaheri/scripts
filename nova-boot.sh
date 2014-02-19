@@ -1,7 +1,8 @@
 #!/bin/bash
 
-((retries = 500))
-((count = $retries))
+((retries = 200))
+((timeout = 200))
+((count = $timeout))
 
 
 if [ ! -z "$1" ] ;  then
@@ -50,7 +51,7 @@ nova_manage_list="$outd/$net-$fts-nova-manage.list"
 net_ip=$(neutron net-list | grep $net | awk '{ print $7 }' | cut -d'.' -f-2)
 
 # loading previously booted instances
-nova list | grep ACTIVE  | grep = | cut -d'=' -f2- | cut -d' ' -f1 | grep $net_ip > $ips3
+nova list | grep ACTIVE  | grep = | cut -d'=' -f2- | cut -d' ' -f1 | grep ^$net_ip > $ips3
 previously_booted=$(cat $ips3 | wc -l)
 
 echo ''
@@ -72,13 +73,13 @@ echo "$msg" >> $output
 
 while [[ $count -ne 0 && $nips -ne $num+$previously_booted ]] ; do
 
-    nova list | grep ACTIVE  | grep = | cut -d'=' -f2- | cut -d' ' -f1 | grep $net_ip | cut -d',' -f1-1 > $ips
+    nova list | grep ACTIVE  | grep = | cut -d'=' -f2- | cut -d' ' -f1 | grep ^$net_ip | cut -d',' -f1-1 > $ips
     nips=$(cat $ips | wc -l)
     comm -13 <(sort $ips3) <(sort $ips) > $ips2
     cat $ips2 >> $ips3
 
     if [[ $nips -ne $num+$previously_booted ]] ; then
-        echo "WARN: Number of instances with IP $nips is not equal to the number of requested instances $num plus previously booted instances $previously_booted"
+        echo "WARN: Number of instances with  $net_ip $nips is not equal to the number of requested instances $num plus previously booted instances $previously_booted"
     fi
 
     while read -r ip; do
@@ -87,7 +88,7 @@ while [[ $count -ne 0 && $nips -ne $num+$previously_booted ]] ; do
     done < "$ips2"
     (( count = count - 1 ))
 #    if (( $count < 20 )) ; then
-    sleep $(expr $retries - $count)
+    sleep $(expr $timeout - $count)
 #    fi
 
 done
