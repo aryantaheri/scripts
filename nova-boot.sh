@@ -47,8 +47,8 @@ nova_manage_list="$outd/$net-$fts-nova-manage.list"
 
 (( nips = 0 ))
 
-# loading subnet IP addr 255.255.0.0
-net_ip=$(neutron net-list | grep $net | awk '{ print $7 }' | cut -d'.' -f-2)
+# loading subnet IP addr "a.b."0.0
+net_ip=$(neutron net-list | grep $net | awk '{ print $7 }' | cut -d'.' -f-2)"\."
 
 # loading previously booted instances
 nova list | grep ACTIVE  | grep = | cut -d'=' -f2- | cut -d' ' -f1 | grep ^$net_ip > $ips3
