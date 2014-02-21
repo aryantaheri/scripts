@@ -1,6 +1,8 @@
 #!/bin/bash
 
-((retries = 200))
+# ping retries
+((retries = 700))
+# ip retrieval retries
 ((timeout = 200))
 ((count = $timeout))
 
@@ -51,7 +53,8 @@ nova_manage_list="$outd/$net-$fts-nova-manage.list"
 net_ip=$(neutron net-list | grep $net | awk '{ print $7 }' | cut -d'.' -f-2)"\."
 
 # loading previously booted instances
-nova list | grep ACTIVE  | grep = | cut -d'=' -f2- | cut -d' ' -f1 | grep ^$net_ip > $ips3
+#nova list | grep ACTIVE  | grep = | cut -d'=' -f2- | cut -d' ' -f1 | grep "^$net_ip" > $ips3
+neutron port-list | awk -F'"' '{ print $8}' | grep "^$net_ip" > $ips3
 previously_booted=$(cat $ips3 | wc -l)
 
 echo ''
@@ -73,7 +76,8 @@ echo "$msg" >> $output
 
 while [[ $count -ne 0 && $nips -ne $num+$previously_booted ]] ; do
 
-    nova list | grep ACTIVE  | grep = | cut -d'=' -f2- | cut -d' ' -f1 | grep ^$net_ip | cut -d',' -f1-1 > $ips
+    # nova list | grep ACTIVE  | grep = | cut -d'=' -f2- | cut -d' ' -f1 | grep "^$net_ip" | cut -d',' -f1-1 > $ips
+    neutron port-list | awk -F'"' '{ print $8}' | grep "^$net_ip" > $ips
     nips=$(cat $ips | wc -l)
     comm -13 <(sort $ips3) <(sort $ips) > $ips2
     cat $ips2 >> $ips3
@@ -93,6 +97,17 @@ while [[ $count -ne 0 && $nips -ne $num+$previously_booted ]] ; do
 
 done
 
-nova list > $nova_list
-nova-manage vm list > $nova_manage_list
-rm  $ips $ips2 $ips3
+echo "nova list" > $nova_list
+nova list >> $nova_list
+
+echo "nova-manage vm list" >> $nova_list
+nova-manage vm list >> $nova_list
+
+echo "neutron port-list | grep ^$net_ip" >> $nova_list
+#neutron port-list | awk -F'"' '{ print $8}' | grep "^$net_ip" >> $nova_list
+cat  $ips >> $nova_list
+
+echo "neutron port-list"  >> $nova_list
+neutron port-list  >> $nova_list
+
+rm $ips $ips2 $ips3
