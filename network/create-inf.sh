@@ -1,6 +1,8 @@
 #!/bin/bash
 
-num=$1
+from=$1
+to=$2
+
 cidr="172.16"
 netmask="24"
 # eth1 ip address: 255.255.255.x
@@ -17,11 +19,12 @@ output="/etc/network/interfaces"
 ##     up ip route add default via w.x.y.z dev ex-secnet1
 #     down ip addr del 192.168.1.21/24 dev ex-secnet1
 #     down ip link set down dev ex-secnet1
-for a in $(seq 1 $num); do
+for a in $(seq $from $to); do
     echo $a
     ipa="$cidr.$a.$x/$netmask"
     echo $ipa
 
+    echo "" >> $output
     echo "#--------- Virtual Interfaces for OS+ODL Dedicated Bridges ---------#" >> $output
     echo "iface ex-secnet$a inet manual"  >> $output
     echo "     up ip link set up dev ex-secnet$a" >> $output
