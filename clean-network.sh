@@ -1,6 +1,7 @@
 #!/bin/bash
 
 brs=$(ovs-vsctl show | grep "Bridge br"  | awk '{ print $2}')
+brs2=$(ovs-vsctl show | grep "Bridge \"br"  | awk '{ print $2}')
 qvs=$(ifconfig -a | grep qv | awk '{ print $1}')
 qbs=$(ifconfig -a | grep qb | awk '{ print $1}')
 taps=$(ifconfig -a | grep tap | awk '{ print $1}')
@@ -12,6 +13,11 @@ ovs-vsctl del-manager
 
 echo "deleteing br* bridges"
 for br in $brs ; do
+    echo "ovs-vsctl del-br $br"
+    ovs-vsctl del-br $br
+done
+
+for br in $brs2 ; do
     echo "ovs-vsctl del-br $br"
     ovs-vsctl del-br $br
 done
