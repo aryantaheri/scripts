@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ping retries
-((retries = 700))
+((retries = 500))
 # ip retrieval retries
 ((timeout = 200))
 ((count = $timeout))
@@ -54,7 +54,7 @@ net_ip=$(neutron net-list | grep $net | awk '{ print $7 }' | cut -d'.' -f-2)"\."
 
 # loading previously booted instances
 #nova list | grep ACTIVE  | grep = | cut -d'=' -f2- | cut -d' ' -f1 | grep "^$net_ip" > $ips3
-neutron port-list | awk -F'"' '{ print $8}' | grep "^$net_ip" > $ips3
+neutron port-list  -c id -c name -c mac_address -c fixed_ips -c device_owner | grep -v "network:dhcp" | awk -F'"' '{ print $8}' | grep "^$net_ip" > $ips3
 previously_booted=$(cat $ips3 | wc -l)
 
 echo ''
@@ -74,17 +74,21 @@ echo "Waiting for IP addresses"
 echo "#|Run Name|# instances|# interfaces/instance|# computes|Instance Distribution|Dedicated Bridges Required|Dedicated Bridges Exists|Dedicated Tunnels Exists|Base Tunnels Exists|Tenant Network Type|Input File|" > $output
 echo "$msg" >> $output
 
-while [[ $count -ne 0 && $nips -ne $num+$previously_booted ]] ; do
+while [[ $count -ne 0 && $nips -lt $num+$previously_booted ]] ; do
 
     # nova list | grep ACTIVE  | grep = | cut -d'=' -f2- | cut -d' ' -f1 | grep "^$net_ip" | cut -d',' -f1-1 > $ips
-    neutron port-list | awk -F'"' '{ print $8}' | grep "^$net_ip" > $ips
+    neutron port-list -c id -c name -c mac_address -c fixed_ips -c device_owner | grep -v "network:dhcp" | awk -F'"' '{ print $8}' | grep "^$net_ip" > $ips
     nips=$(cat $ips | wc -l)
     comm -13 <(sort $ips3) <(sort $ips) > $ips2
     cat $ips2 >> $ips3
 
-    if [[ $nips -ne $num+$previously_booted ]] ; then
+    if [[ $nips -lt $num+$previously_booted ]] ; then
         echo "WARN: Number of instances with  $net_ip $nips is not equal to the number of requested instances $num plus previously booted instances $previously_booted"
     fi
+    if [[ $nips -gt $num+$previously_booted ]] ; then
+        echo "ERROR: Number of instances with  $net_ip $nips is BIGGER than the number of requested instances $num plus previously booted instances $previously_booted"
+    fi
+    
 
     while read -r ip; do
 	echo "Checking ${ip} reachability"
@@ -108,6 +112,6 @@ echo "neutron port-list | grep ^$net_ip" >> $nova_list
 cat  $ips >> $nova_list
 
 echo "neutron port-list"  >> $nova_list
-neutron port-list  >> $nova_list
+neutron port-list -c id -c name -c mac_address -c fixed_ips -c device_owner >> $nova_list
 
 rm $ips $ips2 $ips3
