@@ -2,13 +2,20 @@
 
 ip=$1
 ns=$2
-tcp_out=$3
-udp_out=$4
+tcp=$3
+udp=$4
 
-#key="/home/aryan/scripts/iperf/haisen.pem"
-key="/home/aryan/.ssh/id_rsa"
+tcp_out="$tcp.out"
+tcp_err="$tcp.err"
+
+udp_out="$udp.out"
+udp_err="$udp.err"
+
+key="/home/aryan/scripts/iperf/haisen.pem"
+#key="/home/aryan/.ssh/id_rsa"
 user="root"
 opt="StrictHostKeyChecking no"
+opt2="UserKnownHostsFile=/dev/null"
 
 iperf_time="20"
 iperf_kill_cmd="killall -9 iperf"
@@ -19,20 +26,21 @@ iperf_client_tcp_cmd="iperf -c $ip  -r -y c -t $iperf_time"
 iperf_server_udp_cmd="nohup iperf -s -u > iperf.log 2>&1 &"
 iperf_client_udp_cmd="iperf -c $ip  -r -u -y c -t $iperf_time"
 
-#ns_prefix="sudo ip netns exec $ns"
-ns_prefix=""
+ns_prefix="sudo ip netns exec $ns"
+#ns_prefix=""
 
 # run iperf TCP server
-echo "sudo ip netns exec $ns ssh $user@$ip $opt -i $key \"$iperf_server_tcp_cmd\""
+#echo "sudo ip netns exec $ns ssh $user@$ip $opt -i $key \"$iperf_server_tcp_cmd\""
+
 $ns_prefix ssh $user@$ip -o "$opt" -i $key "$iperf_server_tcp_cmd"
 rc=$?
 
 if [[ $rc -eq 0 ]] ; then
     sleep 2
     echo "$ns_prefix $iperf_client_tcp_cmd"
-    $ns_prefix $iperf_client_tcp_cmd >> $tcp_out
+    $ns_prefix $iperf_client_tcp_cmd >> $tcp_out 2>>$tcp_err
 
-    $ns_prefix ssh $user@$ip -o "$opt" -i $key "$iperf_kill_cmd"
+    $ns_prefix ssh $user@$ip -o "$opt"  -i $key "$iperf_kill_cmd"
     echo "Done"
 
 else
@@ -43,17 +51,17 @@ fi
 
 
 # run iperf UDP server
-echo "sudo ip netns exec $ns ssh $user@$ip $opt -i $key \"$iperf_server_udp_cmd\""
+echo "sudo ip netns exec $ns ssh $user@$ip $opt -o $opt2 -i $key \"$iperf_server_udp_cmd\""
 $ns_prefix ssh $user@$ip -o "$opt" -i $key "$iperf_server_udp_cmd"
 rc=$?
 
 if [[ $rc -eq 0 ]] ; then
     sleep 2
     echo "$ns_prefix $iperf_client_udp_cmd"
-    $ns_prefix $iperf_client_udp_cmd >> $udp_out
+    $ns_prefix $iperf_client_udp_cmd >> $udp_out 2>>$udp_err
     #| awk -F',' '{if($10 !=  "") { print $0 }}'  >> $udp_out
 
-    $ns_prefix ssh $user@$ip -o "$opt" -i $key "$iperf_kill_cmd"
+    $ns_prefix ssh $user@$ip -o "$opt"  -i $key "$iperf_kill_cmd"
     echo "Done"
 
 else
