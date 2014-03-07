@@ -5,7 +5,7 @@
 #$(($(date +%s%N)/1000000))
 start_time=$(($(date +%s%N)/1000000))
 
-((count = 100))
+((count = 300))
 
 if [ ! -z "$1" ] ;  then
     dst=$1
@@ -49,3 +49,5 @@ else
     echo "Dest $dst is not reachable"
     echo "|$dst|-|-|$request_time|$start_time|$end_time|" >> $output
 fi
+
+nova list > "$output-tmp"
