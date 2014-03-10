@@ -2,14 +2,26 @@
 
 ip=$1
 ns=$2
-tcp=$3
-udp=$4
+output_prefix=$3
 
-tcp_out="$tcp.out"
-tcp_err="$tcp.err"
 
-udp_out="$udp.out"
-udp_err="$udp.err"
+tcp_out="$output_prefix-tcp.out"
+tcp_err="$output_prefix-tcp.err"
+
+udp_out="$output_prefix-udp.out"
+udp_err="$output_prefix-udp.err"
+
+if [ "$ns" == "-" ]; then
+    echo "iperf requested for an unreachable ip address $ip. existing"
+    echo "-,-,-,$ip,5001,-,-,-,-" >> $tcp_out
+    echo "-,-,5001,$ip,-,-,-,-,-" >> $tcp_out
+
+    echo "-,-,-,$ip,5001,-,-,-,-" >> $udp_out
+    echo "-,$ip,5001,-,-,-,-,-,-,-,-,-,-,-" >> $udp_out
+    echo "-,-,5001,$ip,-,-,-,-,-,-,-,-,-,-" >> $udp_out
+    
+    exit
+fi
 
 key="/home/aryan/scripts/iperf/haisen.pem"
 #key="/home/aryan/.ssh/id_rsa"
