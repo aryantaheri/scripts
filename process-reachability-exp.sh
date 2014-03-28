@@ -51,6 +51,7 @@ for nxlist in $nxlists ; do
 	echo "|$network_uuid|-|$network_rec|$(expr $network_rec - $network_failed)|$network_failed|$network_rt_avg|" >>  $detailed
     done
     total_rt_avg=$(bc <<< "scale = 2; $sum_network_rt_avg / $num_networks")
+    subexp_rt_avg=$(cat $outputs | grep -v -E '(^#|-)' | awk -F'|' '{sum+=$3; sumsq+=($3)^2} END {printf "%.2f,%.2f\n",sum/NR,sqrt((sumsq-sum^2/NR)/NR)}')
     echo "===>"
     echo "Subexp results:"
     echo "Total processed records in subexp: $total_rec"
