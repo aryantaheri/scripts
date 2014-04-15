@@ -4,7 +4,7 @@
 # 2- nova-multiple-boot.sh per input
 # 3- wait for the nova-multiple-boot to be finished
 echo $0
-exp="exp4"
+exp="iperf-dnb-exp1"
 input=$1
 files="$input/*.list"
 
@@ -13,6 +13,7 @@ fts=$(date +"%y%m%d-%H%M")
 dir="$exp-$fts"
 logs="$dir/logs"
 reports="$dir/reports"
+nova_status="$reports/nova.status"
 
 if [ ! -d "$dir/" ] ; then
     mkdir -p "$dir"
@@ -33,23 +34,33 @@ for file in $files ; do
     echo "=========== Running experiment from $file ===========" > $log_out
     echo "=========== Running experiment from $file ===========" > $log_err
     ./nova-multiple-boot.sh $file $reports "#|$exp-$fts|?|1|-|-|false|false|false|yes|gre|$file_name|"  > $log_out 2> $log_err
-    PSX=$(ps aux | grep 'ping-reachability\|nova-boot\|nova-multiple' | grep -v 'grep\|emacs')
+    PSX=$(ps aux | grep -E '(iperf.sh|iperf-executor.sh|ping-reachability.sh|nova-boot|nova-multiple)' | grep -v 'grep\|emacs')
     while [[ ! -z "$PSX" ]]; do
 	echo "Waiting for previous experiment to be finished."
 	echo "$PSX"
 	sleep 10
-	PSX=$(ps aux | grep 'ping-reachability\|nova-boot\|nova-multiple' | grep -v 'grep\|emacs')
+	PSX=$(ps aux | grep  -E '(iperf.sh|iperf-executor.sh|ping-reachability.sh|nova-boot|nova-multiple)' | grep -v 'grep\|emacs')
     done
-    echo "Iperf network performance measurement"
-    
 
+    neutron port-list -c id -c name -c mac_address -c fixed_ips -c device_owner -c device_id -c network_id -c binding:host_id >> "$reports/$file_name/neutron-port"
+
+    echo "Iperf network performance measurement"
+    ./iperf-executor.sh "$reports/$file_name"
+
+    nova list --fields name,created,flavor,status,OS-EXT-STS:power_state,networks,OS-EXT-SRV-ATTR:host > $nova_status
     echo "Cleaning all instances"
-    ./nova-clean-all.sh
+    ./../nova-clean-all.sh
     sleep 120
 
 done
 
 cp -r $input $dir
 
+mv "$exp.log" $dir
+mv "$exp.err" $dir
+
+
 echo "Processing"
-./process-reachability-exp.sh $reports
+./../process-reachability-exp.sh $reports
+./process-iperf-exp.sh $reports
+

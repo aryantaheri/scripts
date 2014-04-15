@@ -4,7 +4,7 @@
 # 2- nova-multiple-boot.sh per input
 # 3- wait for the nova-multiple-boot to be finished
 echo $0
-exp="exp4"
+exp="dtb-exp80"
 input=$1
 files="$input/*.list"
 
@@ -13,6 +13,7 @@ fts=$(date +"%y%m%d-%H%M")
 dir="$exp-$fts"
 logs="$dir/logs"
 reports="$dir/reports"
+nova_status="$reports/nova.status"
 
 if [ ! -d "$dir/" ] ; then
     mkdir -p "$dir"
@@ -39,7 +40,7 @@ for file in $files ; do
 	sleep 10
 	PSX=$(ps aux | grep 'ping-reachability\|nova-boot\|nova-multiple' | grep -v 'grep\|emacs')
     done
-    
+    nova list --fields name,created,flavor,status,OS-EXT-STS:power_state,networks,OS-EXT-SRV-ATTR:host > $nova_status
     echo "Cleaning all instances"
     ./nova-clean-all.sh
     sleep 120
@@ -47,6 +48,9 @@ for file in $files ; do
 done
 
 cp -r $input $dir
+
+mv "$exp.log" $dir
+mv "$exp.err" $dir
 
 echo "Processing"
 ./process-reachability-exp.sh $reports

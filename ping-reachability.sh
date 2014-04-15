@@ -5,7 +5,7 @@
 #$(($(date +%s%N)/1000000))
 start_time=$(($(date +%s%N)/1000000))
 
-((count = 300))
+((count = 500))
 
 if [ ! -z "$1" ] ;  then
     dst=$1

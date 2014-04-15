@@ -10,7 +10,7 @@ fi
 
 nxlists="$reports/*.list"
 exp_summary="$reports/exp-summary.stat"
-echo "#|instances|networks|total-records|success-records|failed-records|missing-records|average-rt|msg|" > $exp_summary
+echo "#|instances|networks|total-records|success-records|failed-records|missing-records|average-rt|std-rt|msg|" > $exp_summary
 
 #each represent a subexperiment, for a specific number of networks
 for nxlist in $nxlists ; do
@@ -24,7 +24,7 @@ for nxlist in $nxlists ; do
 
     summary="$nxlist/summary.stat"
     detailed="$nxlist/detailed.stat"
-    echo "#|instances|networks|total-records|success-records|failed-records|missing-records|average-rt|msg|" > $summary
+    echo "#|instances|networks|total-records|success-records|failed-records|missing-records|average-rt|std-rt|msg|" > $summary
     echo "#|network-name|instances|records|success|failed|network-average-rt|" > $detailed
     (( total_rec = 0 ))
     (( total_failed = 0 ))
@@ -50,8 +50,8 @@ for nxlist in $nxlists ; do
 	network_uuid=$(echo $report | grep -o '[^/n]*$' | cut -d'-' -f-5)
 	echo "|$network_uuid|-|$network_rec|$(expr $network_rec - $network_failed)|$network_failed|$network_rt_avg|" >>  $detailed
     done
-    total_rt_avg=$(bc <<< "scale = 2; $sum_network_rt_avg / $num_networks")
-    subexp_rt_avg=$(cat $outputs | grep -v -E '(^#|-)' | awk -F'|' '{sum+=$3; sumsq+=($3)^2} END {printf "%.2f,%.2f\n",sum/NR,sqrt((sumsq-sum^2/NR)/NR)}')
+#    total_rt_avg=$(bc <<< "scale = 2; $sum_network_rt_avg / $num_networks")
+    total_rt_avg=$(cat $outputs | grep -v -E '(^#|-)' | awk -F'|' '{sum+=$3; sumsq+=($3)^2} END {printf "%.2f|%.2f\n",sum/NR,sqrt((sumsq-sum^2/NR)/NR)}')
     echo "===>"
     echo "Subexp results:"
     echo "Total processed records in subexp: $total_rec"
