@@ -1,5 +1,7 @@
 #!/bin/bash
 K=4
+MANAGER="tcp:192.168.10.1:6640"
+CONTROLLER="tcp:192.168.10.1:6633"
 
 NUM_SW=$(((5*$K**2)/4))
 NUM_CORE_SW=$((($K**2)/4))
@@ -21,7 +23,7 @@ EDGE=()
 
 HID=0
 SID=0
-PID=1
+PID=13
 
 pad=$(printf '%0.1s' "0"{1..60})
 DPID_LENGTH=16
@@ -32,7 +34,7 @@ do
     ((SID++))
     dpid=$(printf '%*.*s%s\n' 0 $(($DPID_LENGTH - ${#SID})) "$pad" "$SID")
     echo "Adding core br$SID with dpid=$dpid"
-    #ovs-vsctl add-br br$SID -- set bridge br$SID datapath_type=pica8 other-config=datapath-id=$dpid
+    ovs-vsctl add-br br$SID -- set bridge br$SID datapath_type=pica8 other-config=datapath-id=$dpid
     CORE+=("br$SID")
 
 done
@@ -56,7 +58,8 @@ do
 	AGG_SW="br$SID"
 	dpid=$(printf '%*.*s%s\n' 0 $(($DPID_LENGTH - ${#SID})) "$pad" "$SID")
 	echo "Pod$i---Agg: br$SID with dpid=$dpid"
-	#ovs-vsctl add-br br$SID -- set bridge br$SID datapath_type=pica8 other-config=datapath-id=$dpid
+	ovs-vsctl add-br br$SID -- set bridge br$SID datapath_type=pica8 other-config=datapath-id=$dpid
+	
 	POD_AGG+=("br$SID")
 	AGG+=("br$SID")
 
@@ -66,8 +69,8 @@ do
 	    sp=$PID
 	    dp=$(($PID+1))
 	    echo "Pod$i---Ports $AGG_SW($sp) <-> ${CORE[l]}($dp)"
-	    # ovs-vsctl add-port $AGG_SW ge-1/1/$sp vlan_mode=access tag=1 -- set interface ge-1/1/$sp type=pica8
-	    # ovs-vsctl add-port ${CORE[l]} ge-1/1/$dp vlan_mode=access tag=1 -- set interface ge-1/1/$dp type=pica8
+	    ovs-vsctl add-port $AGG_SW ge-1/1/$sp vlan_mode=access tag=1 -- set interface ge-1/1/$sp type=pica8
+	    ovs-vsctl add-port ${CORE[l]} ge-1/1/$dp vlan_mode=access tag=1 -- set interface ge-1/1/$dp type=pica8
 	    ((PID+=2))
 	done
 	
@@ -82,7 +85,7 @@ do
 	EDGE_SW="br$SID"
 	dpid=$(printf '%*.*s%s\n' 0 $(($DPID_LENGTH - ${#SID})) "$pad" "$SID")
         echo "Pod$i---+++Edge br$SID with dpid=$dpid"
-        #ovs-vsctl add-br br$SID -- set bridge br$SID datapath_type=pica8 other-config=datapath-id=$dpid
+        ovs-vsctl add-br br$SID -- set bridge br$SID datapath_type=pica8 other-config=datapath-id=$dpid
         EDGE+=("br$SID")
 
 	# Connects Edge to Aggrs
@@ -91,8 +94,8 @@ do
             sp=$PID
             dp=$(($PID+1))
             echo "Pod$i---+++Ports $EDGE_SW($sp) <-> ${POD_AGG[l]}($dp)"
-            # ovs-vsctl add-port $EDGE_SW ge-1/1/$sp vlan_mode=access tag=1 -- set interface ge-1/1/$sp type=pica8
-            # ovs-vsctl add-port ${POD_AGG[l]} ge-1/1/$dp vlan_mode=access tag=1 -- set interface ge-1/1/$dp type=pica8
+            ovs-vsctl add-port $EDGE_SW ge-1/1/$sp vlan_mode=access tag=1 -- set interface ge-1/1/$sp type=pica8
+            ovs-vsctl add-port ${POD_AGG[l]} ge-1/1/$dp vlan_mode=access tag=1 -- set interface ge-1/1/$dp type=pica8
             ((PID+=2))
 	done
 
@@ -104,3 +107,20 @@ done
 echo "CORE=${CORE[*]}"
 echo "AGG=${AGG[*]}"
 echo "EDGE=${EDGE[*]}"
+
+ALL_BR+=(${CORE[*]})
+ALL_BR+=(${AGG[*]})
+ALL_BR+=(${EDGE[*]})
+echo "ALL_BR=${ALL_BR[*]}"
+
+ovs-vsctl add-port br7 ge-1/1/2 vlan_mode=access tag=1 -- set interface ge-1/1/2 type=pica8
+ovs-vsctl add-port br8 ge-1/1/3 vlan_mode=access tag=1 -- set interface ge-1/1/3 type=pica8
+ovs-vsctl add-port br11 ge-1/1/4 vlan_mode=access tag=1 -- set interface ge-1/1/4 type=pica8
+ovs-vsctl add-port br12 ge-1/1/5 vlan_mode=access tag=1 -- set interface ge-1/1/5 type=pica8
+
+ovs-vsctl set-manager $MANAGER
+for br in ${ALL_BR[*]}
+do
+    echo $br
+    #ovs-vsctl set-controller $br tcp:192.168.10.1:6633
+done

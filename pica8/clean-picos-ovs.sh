@@ -23,5 +23,11 @@ if [ "$mode" == "all" ]; then
     for br in $brs ; do
 	echo "ovs-vsctl del-br $br"
 	ovs-vsctl del-br $br
+	ovs-vsctl clear port ge-1/1/2 qos
+	ovs-vsctl clear port ge-1/1/3 qos
+	ovs-vsctl clear port ge-1/1/4 qos
+	ovs-vsctl clear port ge-1/1/5 qos
+	ovs-vsctl - --all destroy qos
+	ovs-vsctl - --all destroy queue
     done
 fi
